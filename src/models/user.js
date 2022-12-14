@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const validator = require('validator');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const Task = require('../models/tasks');
+const mongoose = require("mongoose");
+const validator = require("validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Task = require("./tasks");
 
 const userSchema = new mongoose.Schema(
   {
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema(
       default: 0,
       validate(value) {
         if (value < 0) {
-          throw new Error('Age should be a positive number');
+          throw new Error("Age should be a positive number");
         }
       },
     },
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       validate(value) {
         if (!validator.isEmail(value)) {
-          throw new Error('Invalid Email');
+          throw new Error("Invalid Email");
         }
       },
     },
@@ -39,8 +39,8 @@ const userSchema = new mongoose.Schema(
       minLength: 6,
       required: true,
       validate(value) {
-        if (value.includes('password')) {
-          throw new Error('Password cannot contain the word password');
+        if (value.includes("password")) {
+          throw new Error("Password cannot contain the word password");
         }
       },
     },
@@ -61,37 +61,37 @@ const userSchema = new mongoose.Schema(
   }
 );
 // Setting up virtual property
-userSchema.virtual('tasks', {
-  ref: 'Task',
-  localField: '_id',
-  foreignField: 'owner',
+userSchema.virtual("tasks", {
+  ref: "Task",
+  localField: "_id",
+  foreignField: "owner",
 });
 // set-up user login with credentials
 userSchema.statics.findByCredentials = async (email, password) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    throw new Error('Unable to login');
+    throw new Error("Unable to login");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   // console.log(isMatch);
   if (!isMatch) {
-    throw new Error('Unable to login');
+    throw new Error("Unable to login");
   }
   console.log(user);
   return user;
 };
 // setup userSchema for pre and hashing password
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   const user = this;
-  if (user.isModified('password')) {
+  if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
   }
   next();
 });
 // delete user tasks when user is removed
-userSchema.pre('remove', async function (next) {
+userSchema.pre("remove", async function (next) {
   const user = this;
   await Task.deleteMany({ owner: user._id });
   next();
@@ -116,6 +116,6 @@ userSchema.methods.toJSON = function () {
   return userObject;
 };
 // CREATE A MODEL STEP
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;
